@@ -1,0 +1,154 @@
+ FYTD = CALCULATE(SUM('BS-EN-1-2-4'[Total]),DATESYTD(Dates[Date],"30/6"))
+ =================================================================================================================================================
+ Last Year  = CALCULATE(SUM('BS-EN-1-2-4'[Total]),DATEADD('Dates'[Date], -1, YEAR))
+ =================================================================================================================================================
+ MoM% BS-EN-1-2-4 = 
+IF(
+	ISFILTERED('Dates'[Date]),
+	ERROR("Time intelligence quick measures can only be grouped or filtered by the Power BI-provided date hierarchy or primary date column."),
+	VAR __PREV_MONTH =
+		CALCULATE(
+			SUM('BS-EN-1-2-4'[Total]),
+			DATEADD('Dates'[Date], -1, MONTH)
+		)
+	RETURN
+		if(isblank(DIVIDE(SUM('BS-EN-1-2-4'[Total]) - __PREV_MONTH, __PREV_MONTH)),0,DIVIDE(SUM('BS-EN-1-2-4'[Total]) - __PREV_MONTH, __PREV_MONTH)))
+=================================================================================================================================================  
+Total FY% = 
+IF(
+	ISFILTERED('Dates'[Date]),
+	ERROR("Time intelligence quick measures can only be grouped or filtered by the Power BI-provided date hierarchy or primary date column."),
+	VAR __PREV_YEAR =
+		CALCULATE(
+			SUM('BS-EN-1-2-4'[Total]),
+			Dates[Fiscal Year]
+		)
+	RETURN
+		DIVIDE(SUM('BS-EN-1-2-4'[Total]) - __PREV_YEAR, __PREV_YEAR)
+)
+=================================================================================================================================================
+Total YoY% = 
+IF(
+	ISFILTERED('Dates'[Date]),
+	ERROR("Time intelligence quick measures can only be grouped or filtered by the Power BI-provided date hierarchy or primary date column."),
+	VAR __PREV_MONTH =
+		CALCULATE(
+			SUM('BS-EN-1-2-4'[Total]),
+			DATEADD('Dates'[Date], -1, YEAR)
+		)
+	RETURN
+		if(isblank(DIVIDE(SUM('BS-EN-1-2-4'[Total]) - __PREV_MONTH, __PREV_MONTH)),0,DIVIDE(SUM('BS-EN-1-2-4'[Total]) - __PREV_MONTH, __PREV_MONTH)))
+
+=================================================================================================================================================
+
+Open Cases Measure Quarter = 
+ADDCOLUMNS (
+    FILTER (
+        CALENDAR ( DATE ( 2018, 1, 1 ), TODAY() ),
+        [Date] = IF(MONTH([Date])<=3,DATE(YEAR([Date]),3,31),IF(MONTH([Date])<=6,DATE(YEAR([Date]),6,30),IF(MONTH([Date])<=9,DATE(YEAR([Date]),9,30),DATE(YEAR([Date]),12,31))))
+    ),
+        "Open IC Request EOT", CALCULATE (
+            SUM ( 'tblCases Open'[# Cases] ),
+            FILTER ( 'tblCases Open',[Date] >= 'tblCases Open'[Received DayOnly] && ([Date] <='tblCases Open'[Closed DayOnly] || ISBLANK('tblCases Open'[Closed DayOnly])  ) &&   'tblCases Open'[Case Entity Type] = "IC Request" &&                          'tblCases Open'[Complaint Type] = "Extension of Time"
+            )
+        ),"Open IC Request Vexatious", CALCULATE (
+            SUM ( 'tblCases Open'[# Cases] ),
+            FILTER ( 'tblCases Open',[Date] >= 'tblCases Open'[Received DayOnly] && ([Date] <='tblCases Open'[Closed DayOnly] || ISBLANK('tblCases Open'[Closed DayOnly])  ) &&  'tblCases Open'[Case Entity Type] = "IC Request" && 'tblCases Open'[Complaint Type] = "Vexatious"
+            )
+        )))
+=================================================================================================================================================
+%Total Decision = FORMAT(DIVIDE(SUM('tblCases Closed to date'[Number]),
+CALCULATE(SUM('tblCases Closed to date'[Number]),
+ALL('tblCases Closed to date'[Decision]))
+,BLANK()),"0%")  
+=================================================================================================================================================
+Average Handling Time = 
+DIVIDE(
+	SUM('tblCases Closed to date'[Time Taken to Close]),
+	SUM('tblCases Closed to date'[Number])
+)
+=================================================================================================================================================
+Cases Closed by Member = DIVIDE(sum('tblCases Closed to date'[Number]),DISTINCTCOUNT('tblCases Closed to date'[Owner]))
+=================================================================================================================================================
+
+MoM% Closed = 
+IF(
+	ISFILTERED('Dates'[Date]),
+	ERROR("Time intelligence quick measures can only be grouped or filtered by the Power BI-provided date hierarchy or primary date column."),
+	VAR __PREV_MONTH =
+		CALCULATE(
+			SUM('tblCases Closed to date'[Number]),
+			DATEADD('Dates'[Date], -1, MONTH)
+		)
+	RETURN
+		if(isblank(DIVIDE(SUM('tblCases Closed to date'[Number]) - __PREV_MONTH, __PREV_MONTH)),0,DIVIDE(SUM('tblCases Closed to date'[Number]) - __PREV_MONTH, __PREV_MONTH)))
+=================================================================================================================================================
+Total Closed = if(ISBLANK(SUM('tblCases Closed to date'[Number])),0,SUM('tblCases Closed to date'[Number]))
+=================================================================================================================================================
+YoY% Closed = 
+IF(
+	ISFILTERED('Dates'[Date]),
+	ERROR("Time intelligence quick measures can only be grouped or filtered by the Power BI-provided date hierarchy or primary date column."),
+	VAR __PREV_MONTH =
+		CALCULATE(
+			SUM('tblCases Closed to date'[Number]),
+			DATEADD('Dates'[Date], -1, YEAR)
+		)
+	RETURN
+		if(isblank(DIVIDE(SUM('tblCases Closed to date'[Number]) - __PREV_MONTH, __PREV_MONTH)),0,DIVIDE(SUM('tblCases Closed to date'[Number]) - __PREV_MONTH, __PREV_MONTH)))
+    =================================================================================================================================================
+    %Total Respondent = FORMAT(DIVIDE(SUM('tblCases Received to date'[# Cases]),
+                          CALCULATE(SUM('tblCases Received to date'[# Cases]),
+                          ALL('tblCases Received to date'[Respondent]))
+                          ,BLANK()),"0%")
+=================================================================================================================================================
+    Category Filter = TRIM(if(SEARCH("[Cat",'tblCases Open'[Category],1,0)>=1,mid('tblCases Open'[Category],SEARCH("[Cat",'tblCases Open'[Category],1,1),1+FIND("]",'tblCases Open'[Category],SEARCH("[Cat",'tblCases Open'[Category],1,0),1)-if(SEARCH("[Cat",'tblCases Open'[Category],1,0)<FIND("]",'tblCases Open'[Category],SEARCH("[Cat",'tblCases Open'[Category],1,1),1),FIND("[Cat",'tblCases Open'[Category],1,1),0)),"No Cat"))
+ 
+ =================================================================================================================================================
+% of all IC Reviews = DIVIDE([Deemed Cases],tblCases[Total Cases Received])
+=================================================================================================================================================
+Deemed Cases = CALCULATE(SUM(tblCases[Number]),
+tblCases[Deemed decision]="Yes")
+=================================================================================================================================================
+%Total Decision = FORMAT(DIVIDE(SUM('tblCases Closed'[Number]),
+CALCULATE(SUM('tblCases Closed'[Number]),
+ALL('tblCases Closed'[Decision]))
+,BLANK()),"0%")
+=================================================================================================================================================
+Last Year =CALCULATE(SUM('tblCases'[Number]),DATEADD('Dates'[Date], -1, YEAR)	)
+=================================================================================================================================================
+Ranking Client Year = RANKX(ALL(tblCases[FiscalDate],tblCases[Respondent Client Type]),tblCases[Total Cases Received])
+=================================================================================================================================================
+Ranking Notified Client = RANKX(ALL(tblCases[FiscalDate],tblCases[Notified By Client (of DBN) Client Type]),tblCases[Total Cases Received])
+=================================================================================================================================================
+Average cases closed per Month = AVERAGEX(	KEEPFILTERS(VALUES('Dates'[Month])),CALCULATE(SUM('tblCases Closed'[Number])))
+=================================================================================================================================================
+Average Handling Time = 
+DIVIDE(
+	SUM('tblCases Closed'[Time Taken to Close]),
+	SUM('tblCases Closed'[Number])
+)
+=================================================================================================================================================
+Average Handling Time Months = 
+DIVIDE(DIVIDE(
+	SUM('tblCases Closed'[Time Taken to Close]),
+	SUM('tblCases Closed'[Number])
+),30)
+=================================================================================================================================================
+Cases Closed by Member = DIVIDE(sum('tblCases Closed'[Number]),DISTINCTCOUNT('tblCases Closed'[Owner]))
+=================================================================================================================================================
+Cases Closed by Member MoM% = 
+IF(
+	ISFILTERED('Dates'[Date]),
+	ERROR("Time intelligence quick measures can only be grouped or filtered by the Power BI-provided date hierarchy or primary date column."),
+	VAR __PREV_MONTH =
+		CALCULATE(
+			[Cases Closed by Member],
+			DATEADD('Dates'[Date], -1, MONTH)
+		)
+	RETURN
+		DIVIDE([Cases Closed by Member] - __PREV_MONTH, __PREV_MONTH)
+)
+=================================================================================================================================================
+KPI 60 days = DIVIDE(CALCULATE(sum('tblCases Closed'[Number]),FILTER('tblCases Closed','tblCases Closed'[Time taken 60]="<=60")),sum('tblCases Closed'[Number]))
+=================================================================================================================================================
