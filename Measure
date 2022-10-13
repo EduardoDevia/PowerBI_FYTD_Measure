@@ -1,3 +1,60 @@
+================================================================================================================================================= 
+Full year Actual = CALCULATE('Budget$'[Actual $],ALL(Dates[Month]))
+================================================================================================================================================= 
+Color KPI Actual = if('Budget$'[YTD Budget v Actual Var.]>1,1,0)
+================================================================================================================================================= 
+KPI Actual = 
+switch(
+    TRUE(),
+        'Budget$'[YTD Budget v Actual Var.]>0 ,UNICHAR(8680),
+        'Budget$'[YTD Budget v Actual Var.]<0 ,UNICHAR(8680),
+        UNICHAR(8680))
+================================================================================================================================================= 
+Title Branch $ = 
+var selected_branch = SELECTEDVALUE('Branch'[Branch])
+var selected_cost_centre= SELECTEDVALUE('Cost Centre'[Cost centre])
+var selected_natural_account = SELECTEDVALUE('Account Level'[Natural Account.1])
+var selected_location = SELECTEDVALUE(Location[Location])
+return
+switch(
+    TRUE(),
+        HASONEFILTER(Location[Location]),
+        selected_branch & " " & selected_cost_centre  & " " & selected_natural_account & " " & selected_location  & SELECTEDVALUE(Dates[Fiscal Year]),
+            HASONEFILTER('Account Level'[Natural Account.1]),
+            selected_branch & " "  & selected_cost_centre  & " " & selected_natural_account  & SELECTEDVALUE(Dates[Fiscal Year]),
+                HASONEFILTER('Cost Centre'[Cost centre]),
+                selected_branch & " " & selected_cost_centre  & SELECTEDVALUE(Dates[Fiscal Year]),
+                    HASONEFILTER('Branch'[Branch]),
+                    selected_branch   & SELECTEDVALUE(Dates[Fiscal Year]), 
+                
+    "All Branches " & SELECTEDVALUE(Dates[Fiscal Year]))
+================================================================================================================================================= 
+LastActualDate = calculate(eomonth(LASTDATE('Budget$'[Report Generation Date]),-1),ALL('Budget$'))
+================================================================================================================================================= 
+Actual Cumulative = CALCULATE('Budget$'[Actual $],DATESYTD(Dates[Date],"30/06"))
+================================================================================================================================================= 
+YTD Budget ASL = CALCULATE(DIVIDE(SUM('Budget ASL'[Staffing YTD budget ]),[Months YTD]),Dates[YTD]="YTD",ALL(Dates[Month]))
+================================================================================================================================================= 
+YTD Actual ASL = CALCULATE(DIVIDE(SUM('Budget ASL'[Staffing YTD Actual]),[Months YTD]),ALL(Dates[Month]))
+================================================================================================================================================= 
+Months YTD = CALCULATE(DISTINCTCOUNT(Dates[Month Number]),Dates[YTD]="YTD",ALL(Dates[Month]))
+================================================================================================================================================= 
+YTD Actual Expense = 
+var lastperiod = 'ABC'[Last ABC Date]
+return 
+calculate('ABC'[Actual Monthly Expense],filter('Calendar','Calendar'[Date]='Calendar'[Date] && 'Calendar'[Date]<=lastperiod))
+================================================================================================================================================= 
+Title = "Import Animals from " & MIN(Dates[Date]) & " to " & MAX(Dates[Date])
+================================================================================================================================================= 
+Title Arrangements = 
+var selected_arrangment = SELECTEDVALUE('Arrangements'[Arrangments])
+return
+switch(
+    TRUE(),
+    HASONEFILTER('Arrangements'[Arrangments]),
+    selected_arrangment & " Cost Recovery Arrangements" & " as at " & format('ABC'[Last ABC Date],"mmm yyyy") & " (" & SELECTEDVALUE('Calendar'[Fiscal Year]) &" )",
+    "Cost Recovery Arrangements " & " as at " & format('ABC'[Last ABC Date],"mmm yyyy") & " (" & SELECTEDVALUE('Calendar'[Fiscal Year]) &" )")
+ =================================================================================================================================================
  FYTD = CALCULATE(SUM('BS-EN-1-2-4'[Total]),DATESYTD(Dates[Date],"30/6"))
  =================================================================================================================================================
  Last Year  = CALCULATE(SUM('BS-EN-1-2-4'[Total]),DATEADD('Dates'[Date], -1, YEAR))
