@@ -1,4 +1,21 @@
 ================================================================================================================================================= 
+The below calculates the average of a division
+Mandatory Courses Count = CALCULATE(COUNT(Course[Category ID]),'Course Category'[Category]= "Mandatory training")
+
+Course Completed Mandatory = if('User Report'[Total Users]>calculate('Courses Completed'[Courses Completed & Compliant],
+filter('Course Category','Course Category'[Category] ="Mandatory training")),0,
+calculate('Courses Completed'[Courses Completed & Compliant],filter('Course Category','Course Category'[Category] ="Mandatory training")))
+
+Percent Course Compliant Mandatory = averagex(values('User Report'),divide('Courses Completed'[Course Completed Mandatory],[Mandatory Courses Count],0))
+================================================================================================================================================= 
+Sum all the Maximums number of the LNC, so it basically there is a measure that pulls the maximum importers
+Maximun Importers = MAX('LECR Summary'[# Importers])
+and 
+With the SumX and the LNC pulls the maximum number of each LNC and sum all
+Certificates per month = SUMX(DISTINCT('LECR Summary'[LNC ]),[Maximun Importers])
+================================================================================================================================================= 
+CALCULATE(COUNTROWS('Travel National Data'),search("ta review",'Travel National Data'[ Trip Status],,0))
+================================================================================================================================================= 
 Full year Actual = CALCULATE('Budget$'[Actual $],ALL(Dates[Month]))
 ================================================================================================================================================= 
 Color KPI Actual = if('Budget$'[YTD Budget v Actual Var.]>1,1,0)
